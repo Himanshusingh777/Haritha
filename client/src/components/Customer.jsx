@@ -315,13 +315,13 @@ function HarithaStyles() {
       .track .lbl{ font-size:10px; letter-spacing:.03em; color:var(--ink-soft); text-align:center; }
       .track .step.now .lbl{ color:var(--ink); font-weight:600; }
 
-      .subtabs{ display:flex; gap:28px; border-bottom:1px solid var(--line); width:fit-content; }
+      .subtabs{ display:flex; gap:28px; border-bottom:1px solid var(--line); width:fit-content; background:transparent; padding:0; border-radius:0; box-shadow:none; }
       .subtabs button{
-        border:none; background:transparent; padding:0 0 14px; font-weight:600; font-size:13px;
+        border:none!important; background:transparent!important; padding:0 0 14px!important; font-weight:600; font-size:13px;
         letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); cursor:pointer;
-        border-bottom:2px solid transparent; margin-bottom:-1px;
+        border-bottom:2px solid transparent!important; margin-bottom:-1px; border-radius:0!important; box-shadow:none!important;
       }
-      .subtabs button.on{ color:var(--ink); border-bottom-color:var(--gold); }
+      .subtabs button.on{ color:var(--ink)!important; border-bottom-color:var(--gold)!important; background:transparent!important; box-shadow:none!important; }
     `}</style>
   );
 }
