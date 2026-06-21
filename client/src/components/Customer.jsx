@@ -80,11 +80,11 @@ function HarithaStyles() {
       :root{
         --ink:#1c1a17;
         --ink-soft:#4a443c;
-        --paper:#fbf9f6;
-        --paper-deep:#f1ece3;
+        --paper:#f4faf6;
+        --paper-deep:#e7f3ec;
         --gold:#a9824f;
         --gold-deep:#7c5e35;
-        --line:#e4dccb;
+        --line:#d9e8df;
         --success:#2f6b4f;
         --warn:#9c6a17;
         --danger:#8a3324;
