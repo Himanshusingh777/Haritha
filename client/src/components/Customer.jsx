@@ -6,18 +6,12 @@ import {
   STATUS, TRACK_STEPS, STEP_ORDER,
 } from "../helpers.js";
 
-/* ----------------------------------------------------------------------
-   PURE DISPLAY HELPERS — cosmetic only. These never read or write any
-   app state, never call store actions, and have no effect on cart,
-   orders, auth, or pricing logic. They only decide what stars/numbers
-   to paint on screen for a given catalog item.
-   ---------------------------------------------------------------------- */
 function ratingFor(seed) {
   let h = 0;
   const s = String(seed || "veg");
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100000;
-  const rating = Math.round((3.6 + (h % 15) / 10) * 10) / 10; // 3.6 – 5.0
-  const count = 18 + (h % 240); // 18 – 257
+  const rating = Math.round((3.6 + (h % 15) / 10) * 10) / 10;
+  const count = 18 + (h % 240);
   return { rating, count };
 }
 
@@ -33,10 +27,6 @@ function Stars({ value }) {
   );
 }
 
-/* Pure presentational 3D tilt wrapper — tracks mouse position over the
-   card and rotates it slightly in 3D space (like a floating product
-   card). Holds only its own transform in local state; never touches
-   app/store state and passes through whatever it's given untouched. */
 function TiltCard({ className, children }) {
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
 
@@ -44,7 +34,7 @@ function TiltCard({ className, children }) {
     const r = e.currentTarget.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width;
     const py = (e.clientY - r.top) / r.height;
-    setTilt({ rx: (0.5 - py) * 16, ry: (px - 0.5) * 16, active: true });
+    setTilt({ rx: (0.5 - py) * 8, ry: (px - 0.5) * 8, active: true });
   }
   function onLeave() {
     setTilt({ rx: 0, ry: 0, active: false });
@@ -55,26 +45,23 @@ function TiltCard({ className, children }) {
       className={className + " tilt3d" + (tilt.active ? " tilt3d-active" : "")}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      style={{ transform: `perspective(800px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateZ(${tilt.active ? 14 : 0}px)` }}
+      style={{ transform: `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateZ(${tilt.active ? 6 : 0}px)` }}
     >
       {children}
     </div>
   );
 }
 
-/* Pure UI search box — local text state only, filters the already
-   loaded catalog client-side. Doesn't call the store, doesn't change
-   what addToCart/cartInc/cartDec receive (still the real item id). */
 function SearchBar({ query, setQuery, resultCount, showCount }) {
   return (
     <div className="search-wrap">
       <div className="search-box">
-        <span className="search-icon">🔍</span>
+        <span className="search-icon">⌕</span>
         <input
           className="search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for tomatoes, spinach, ginger…"
+          placeholder="Search the catalogue — tomatoes, spinach, ginger…"
         />
         {query ? (
           <button type="button" className="search-clear" onClick={() => setQuery("")} aria-label="Clear search">✕</button>
@@ -87,304 +74,254 @@ function SearchBar({ query, setQuery, resultCount, showCount }) {
   );
 }
 
-/* Single shared stylesheet for this whole module — additive only,
-   targets existing class names plus a couple of new ones used by the
-   rating bits above. No markup that drives logic is touched. */
 function HarithaStyles() {
   return (
     <style>{`
       :root{
-        --hf-forest:#3f6b3f;
-        --hf-forest-deep:#2c4f2c;
-        --hf-cream:#f3e6c8;
-        --hf-turmeric:#e2a23a;
-        --hf-tomato:#c1502f;
-        --hf-line:#cdb586;
-        --soil:#352617;
-        --soil-deep:#241a10;
-        --plank:#7a5230;
-        --plank-light:#946539;
-        --paper:#fbf2dd;
+        --ink:#1c1a17;
+        --ink-soft:#4a443c;
+        --paper:#fbf9f6;
+        --paper-deep:#f1ece3;
+        --gold:#a9824f;
+        --gold-deep:#7c5e35;
+        --line:#e4dccb;
+        --success:#2f6b4f;
+        --warn:#9c6a17;
+        --danger:#8a3324;
       }
 
-      /* ---- whole-page backdrop: a wooden market stall ---- */
-      html{ background:var(--soil-deep); }
+      html{ background:var(--paper-deep); }
       body{
-        background:
-          repeating-linear-gradient(90deg, rgba(0,0,0,.16) 0px, rgba(0,0,0,.16) 2px, transparent 2px, transparent 150px),
-          radial-gradient(120% 90% at 50% -10%, rgba(226,162,58,.10), transparent 60%),
-          linear-gradient(180deg, var(--soil) 0%, var(--soil-deep) 100%);
-        background-attachment:fixed;
+        background:linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
         min-height:100vh;
+        color:var(--ink);
       }
-      body, .card, .veg, .order{ color:#241a10; }
+      .card, .veg, .order{ color:var(--ink); }
 
       .hero{
         position:relative;
         display:flex;
         align-items:center;
         justify-content:space-between;
-        gap:24px;
-        background:
-          repeating-linear-gradient(180deg, rgba(0,0,0,.08) 0 3px, transparent 3px 26px),
-          linear-gradient(135deg, var(--plank-light) 0%, var(--plank) 60%, var(--soil) 130%);
-        color:#fbf2dd;
-        border-radius:16px;
-        border:6px solid var(--soil-deep);
-        padding:30px 34px;
-        margin-bottom:0;
+        gap:32px;
+        background:linear-gradient(135deg, #21201c 0%, #141310 100%);
+        color:#f6f1e7;
+        border-radius:4px;
+        padding:46px 48px;
+        margin-bottom:34px;
         overflow:hidden;
-        box-shadow:0 26px 50px -18px rgba(0,0,0,.65), inset 0 0 0 2px rgba(255,255,255,.05);
-        transform:perspective(1000px) rotateX(1.2deg);
+        box-shadow:0 30px 60px -30px rgba(0,0,0,.45);
       }
       .hero:before{
         content:"";
         position:absolute; inset:0;
-        background:linear-gradient(180deg, rgba(255,255,255,.08), transparent 40%);
+        background:linear-gradient(120deg, rgba(169,130,79,.16), transparent 55%);
         pointer-events:none;
       }
-
-      @keyframes floaty{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-9px) rotate(5deg); } }
-      .hero-stack span{ animation:floaty 5.5s ease-in-out infinite; }
-      .hs2{ animation-delay:.5s; }
-      .hs3{ animation-delay:1s; }
-      .hs4{ animation-delay:1.5s; }
-      .hs5{ animation-delay:2s; }
-
-      .search-wrap{ position:relative; z-index:6; display:flex; flex-direction:column; align-items:center; margin:-26px 0 22px; }
-      .search-box{
-        width:min(580px,94%);
-        display:flex; align-items:center; gap:10px;
-        background:var(--paper); border:2px dashed var(--plank); border-radius:12px;
-        padding:14px 18px;
-        font-family:'Courier New', monospace;
-        box-shadow:0 22px 38px -16px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.5) inset;
-        transition:box-shadow .18s ease, transform .18s ease;
-        transform:rotate(-0.4deg);
-      }
-      .search-box:hover, .search-box:focus-within{
-        box-shadow:0 26px 44px -14px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.5) inset;
-        transform:translateY(-1px) rotate(0deg);
-      }
-      .search-icon{ font-size:16px; opacity:.7; }
-      .search-input{ flex:1; border:none; outline:none; background:transparent; font-size:14.5px; color:#241a10; font-family:inherit; }
-      .search-clear{
-        border:none; background:var(--hf-line); color:#fff; width:22px; height:22px; border-radius:50%;
-        font-size:11px; cursor:pointer; line-height:1;
-      }
-      .search-meta{ font-size:12.5px; color:#e2cfa0; margin-top:9px; }
-      .no-results{ grid-column:1/-1; text-align:center; padding:54px 18px; color:#e2cfa0; }
-      .no-results .nr-emoji{ font-size:34px; margin-bottom:8px; }
       .hero-eyebrow{
         display:inline-block;
-        font-size:12.5px;
-        letter-spacing:.04em;
-        background:rgba(0,0,0,.22);
-        border:1px solid rgba(255,255,255,.15);
-        padding:5px 11px;
-        border-radius:999px;
-        margin-bottom:12px;
+        font-size:11px;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+        color:var(--gold);
+        margin-bottom:18px;
+        font-weight:600;
       }
       .hero-text h2{
         font-family:'Fraunces',serif;
-        font-weight:600;
-        font-size:clamp(22px,3vw,32px);
-        line-height:1.18;
-        margin:0 0 14px;
-        color:#fff8e8;
-        text-shadow:2px 3px 0 rgba(0,0,0,.3);
+        font-weight:500;
+        font-size:clamp(26px,3.4vw,40px);
+        line-height:1.16;
+        margin:0 0 22px;
+        color:#fbf9f6;
+        max-width:480px;
       }
-      .hero-chips{ display:flex; flex-wrap:wrap; gap:9px; }
+      .hero-chips{ display:flex; flex-wrap:wrap; gap:10px; }
       .hchip{
-        background:rgba(0,0,0,.2);
-        border:1px solid rgba(255,255,255,.18);
-        padding:6px 12px;
-        border-radius:999px;
-        font-size:12.5px;
-        backdrop-filter:blur(2px);
+        border:1px solid rgba(246,241,231,.25);
+        padding:8px 16px;
+        font-size:11.5px;
+        letter-spacing:.04em;
+        color:#e9e2d2;
       }
-      .hero-stack{ position:relative; width:160px; height:120px; flex-shrink:0; }
-      .hero-stack span{
-        position:absolute;
-        font-size:40px;
-        filter:drop-shadow(0 8px 10px rgba(0,0,0,.35));
-      }
-      .hs1{ top:0; left:20px; }
-      .hs2{ top:10px; left:90px; font-size:34px; }
-      .hs3{ top:55px; left:10px; font-size:30px; }
-      .hs4{ top:60px; left:110px; font-size:28px; }
-      .hs5{ top:30px; left:55px; font-size:30px; opacity:.9; }
+      .hero-stack{ position:relative; width:170px; height:130px; flex-shrink:0; opacity:.92; }
+      .hero-stack span{ position:absolute; font-size:34px; filter:grayscale(.15) drop-shadow(0 10px 14px rgba(0,0,0,.4)); }
+      .hs1{ top:6px; left:22px; }
+      .hs2{ top:14px; left:92px; font-size:28px; }
+      .hs3{ top:58px; left:8px; font-size:26px; }
+      .hs4{ top:64px; left:108px; font-size:24px; }
+      .hs5{ top:34px; left:58px; font-size:26px; }
 
-      .offers-rail{ display:flex; gap:14px; overflow-x:auto; padding:10px 4px 12px; margin-bottom:20px; }
+      .search-wrap{ display:flex; flex-direction:column; align-items:center; margin-bottom:30px; }
+      .search-box{
+        width:min(620px,96%);
+        display:flex; align-items:center; gap:12px;
+        background:#fff; border:1px solid var(--line); border-radius:2px;
+        padding:16px 20px;
+        box-shadow:0 16px 32px -20px rgba(28,26,23,.25);
+      }
+      .search-icon{ font-size:17px; color:var(--gold-deep); }
+      .search-input{ flex:1; border:none; outline:none; background:transparent; font-size:14.5px; color:var(--ink); letter-spacing:.01em; }
+      .search-clear{
+        border:none; background:var(--paper-deep); color:var(--ink-soft); width:24px; height:24px; border-radius:50%;
+        font-size:11px; cursor:pointer; line-height:1;
+      }
+      .search-meta{ font-size:12px; letter-spacing:.03em; color:var(--ink-soft); margin-top:10px; }
+      .no-results{ grid-column:1/-1; text-align:center; padding:60px 18px; color:var(--ink-soft); }
+      .no-results .nr-emoji{ font-size:30px; margin-bottom:10px; }
+
+      .offers-rail{ display:flex; gap:16px; overflow-x:auto; padding-bottom:6px; margin-bottom:30px; }
       .offer-card{
         flex:0 0 auto;
-        min-width:190px;
-        border-radius:4px 4px 12px 12px;
-        padding:16px 16px 14px;
-        border:1px solid var(--hf-line);
-        background:var(--paper);
-        box-shadow:0 12px 22px -10px rgba(0,0,0,.45);
-        transition:transform .16s ease, box-shadow .16s ease;
-        position:relative;
+        min-width:210px;
+        border-radius:2px;
+        padding:20px 20px 18px;
+        border:1px solid var(--line);
+        background:#fff;
+        box-shadow:0 14px 28px -20px rgba(28,26,23,.2);
+        transition:box-shadow .2s ease, transform .2s ease;
       }
-      .offer-card:before{
-        content:""; position:absolute; top:-8px; left:50%; width:14px; height:14px; margin-left:-7px;
-        background:var(--plank); border-radius:50%; box-shadow:0 3px 5px rgba(0,0,0,.35);
-      }
-      .offer-card:nth-child(odd){ transform:rotate(-1.4deg); }
-      .offer-card:nth-child(even){ transform:rotate(1.3deg); }
-      .offer-card:hover{ transform:translateY(-4px) rotate(0deg); box-shadow:0 18px 30px -10px rgba(0,0,0,.5); }
-      .oc-theme-green{ background:#eef3e2; border-color:#cddaaf; }
-      .oc-theme-orange{ background:#fbe9d2; border-color:#e7c089; }
-      .oc-emoji{ font-size:22px; margin-bottom:6px; }
-      .oc-title{ font-weight:700; font-size:14px; color:#2e2113; font-family:'Fraunces',serif; }
-      .oc-sub{ font-size:12.5px; color:#6c5b3f; margin-top:2px; }
+      .offer-card:hover{ transform:translateY(-3px); box-shadow:0 20px 36px -18px rgba(28,26,23,.28); }
+      .oc-theme-green{ border-top:2px solid var(--success); }
+      .oc-theme-orange{ border-top:2px solid var(--gold); }
+      .oc-emoji{ font-size:20px; margin-bottom:10px; }
+      .oc-title{ font-weight:600; font-size:14px; color:var(--ink); font-family:'Fraunces',serif; }
+      .oc-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; }
       .oc-code{
-        display:inline-block; margin-top:8px; font-size:11.5px; font-weight:700;
-        letter-spacing:.04em; background:var(--hf-tomato); color:#fff;
-        padding:3px 9px; border-radius:5px;
+        display:inline-block; margin-top:12px; font-size:11px; font-weight:600;
+        letter-spacing:.08em; text-transform:uppercase; color:var(--gold-deep);
+        border:1px solid var(--gold); padding:4px 10px;
       }
 
       .grid{
-        display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:22px 18px;
-        perspective:1400px;
+        display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:22px;
       }
       .veg{
         position:relative;
-        background:linear-gradient(180deg, var(--paper), var(--hf-cream));
-        border:1px solid var(--plank-light);
-        border-top:7px solid var(--plank);
-        border-radius:4px 4px 16px 16px;
-        padding:20px 14px 14px;
+        background:#fff;
+        border:1px solid var(--line);
+        border-radius:2px;
+        padding:26px 18px 20px;
         text-align:center;
         transform-style:preserve-3d;
-        box-shadow:0 10px 18px -10px rgba(0,0,0,.5);
+        box-shadow:0 14px 30px -22px rgba(28,26,23,.22);
       }
-      .veg:after{
-        content:""; position:absolute; top:-11px; right:16px; width:28px; height:20px;
-        background:radial-gradient(circle at 50% 26%, transparent 2.5px, var(--paper) 3.5px);
-        border:1px solid var(--plank);
-        clip-path:polygon(0 0,100% 0,100% 58%,50% 100%,0 58%);
-        transform:rotate(9deg);
-        box-shadow:0 4px 6px rgba(0,0,0,.35);
-      }
-      .tilt3d{ transition:transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease; will-change:transform; }
-      .tilt3d:hover{ box-shadow:0 26px 36px -14px rgba(0,0,0,.55); border-color:var(--hf-turmeric); }
-      .tilt3d-active{ box-shadow:0 30px 40px -12px rgba(0,0,0,.6); }
-      .veg:before{
-        content:""; position:absolute; left:14px; right:14px; top:0; height:3px; border-radius:0 0 3px 3px;
-        background:linear-gradient(90deg, var(--hf-turmeric), var(--hf-tomato));
-        opacity:0; transition:opacity .2s ease;
-      }
-      .tilt3d:hover:before, .tilt3d-active:before{ opacity:1; }
-      .veg.soldout{ opacity:.55; }
-      .veg .emoji{ font-size:38px; margin-bottom:6px; filter:drop-shadow(0 8px 8px rgba(0,0,0,.25)); }
-      .veg .nm{ font-weight:650; color:#2e2113; font-size:14.5px; font-family:'Fraunces',serif; }
-      .veg .pr{ font-family:'Fraunces',serif; font-weight:600; color:var(--hf-forest-deep); margin-top:3px; }
-      .veg .unit{ font-family:inherit; font-weight:400; color:#8a7a56; font-size:12px; }
+      .tilt3d{ transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; will-change:transform; }
+      .tilt3d:hover{ box-shadow:0 24px 40px -22px rgba(28,26,23,.28); border-color:var(--gold); }
+      .tilt3d-active{ box-shadow:0 26px 42px -20px rgba(28,26,23,.3); }
+      .veg.soldout{ opacity:.5; }
+      .veg .emoji{ font-size:34px; margin-bottom:14px; filter:grayscale(.1) drop-shadow(0 6px 8px rgba(0,0,0,.12)); }
+      .veg .nm{ font-weight:600; color:var(--ink); font-size:14.5px; font-family:'Fraunces',serif; letter-spacing:.01em; }
+      .veg .pr{ font-family:'Fraunces',serif; font-weight:600; color:var(--gold-deep); margin-top:6px; font-size:15px; }
+      .veg .unit{ font-family:inherit; font-weight:400; color:var(--ink-soft); font-size:11.5px; }
 
-      .rating-row{ display:flex; align-items:center; justify-content:center; gap:5px; margin-top:6px; }
-      .stars{ display:inline-flex; letter-spacing:1px; font-size:13px; }
-      .stars .star{ color:#d9c79a; }
-      .stars .star.on{ color:var(--hf-turmeric); }
-      .stars .star.half{ color:var(--hf-turmeric); opacity:.55; }
-      .rating-num{ font-size:12px; font-weight:700; color:#4a3c24; }
-      .rating-count{ font-size:11.5px; color:#9a8a64; }
+      .rating-row{ display:flex; align-items:center; justify-content:center; gap:6px; margin-top:8px; }
+      .stars{ display:inline-flex; letter-spacing:1px; font-size:12px; }
+      .stars .star{ color:#e1d9c4; }
+      .stars .star.on{ color:var(--gold); }
+      .stars .star.half{ color:var(--gold); opacity:.55; }
+      .rating-num{ font-size:11.5px; font-weight:600; color:var(--ink-soft); }
+      .rating-count{ font-size:11px; color:#a99c84; }
 
       .badge{
-        display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.05em;
-        padding:3px 10px; border-radius:6px; text-transform:uppercase;
-        border:1.5px dashed currentColor; background:transparent; transform:rotate(-2.5deg);
-        font-family:'Fraunces',serif;
+        display:inline-block; font-size:10px; font-weight:600; letter-spacing:.08em;
+        padding:4px 10px; border-radius:1px; text-transform:uppercase;
+        border:1px solid currentColor; background:transparent;
       }
-      .b-stock{ color:#2f5d2f; }
-      .b-low{ color:#a8650f; }
-      .b-out{ color:#9c3a26; }
+      .b-stock{ color:var(--success); }
+      .b-low{ color:var(--warn); }
+      .b-out{ color:var(--danger); }
 
       .btn{
         position:relative;
-        border-radius:9px; font-weight:650;
-        transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;
+        border-radius:2px; font-weight:600; letter-spacing:.03em;
+        transition:transform .12s ease, filter .12s ease, box-shadow .12s ease, background .12s ease;
       }
-      .btn:active{ transform:translateY(1px) scale(.98); }
+      .btn:active{ transform:translateY(1px); }
       .btn-carrot{
-        background:linear-gradient(180deg, #d96a3f, var(--hf-tomato));
-        color:#fff;
-        box-shadow:0 10px 18px -8px rgba(193,80,47,.6), 0 1px 0 rgba(255,255,255,.35) inset, 0 -2px 0 rgba(0,0,0,.18) inset;
+        background:var(--ink);
+        color:#fbf9f6;
+        box-shadow:0 10px 18px -10px rgba(28,26,23,.45);
       }
-      .btn-carrot:hover{ filter:brightness(1.06); transform:translateY(-1px); }
+      .btn-carrot:hover{ background:#000; }
       .btn-green{
-        background:linear-gradient(180deg, #527e52, var(--hf-forest));
+        background:var(--gold-deep);
         color:#fff;
-        box-shadow:0 10px 18px -8px rgba(44,79,44,.55), 0 1px 0 rgba(255,255,255,.3) inset, 0 -2px 0 rgba(0,0,0,.2) inset;
+        box-shadow:0 10px 18px -10px rgba(124,94,53,.45);
       }
-      .btn-green:hover{ filter:brightness(1.08); transform:translateY(-1px); }
-      .btn-ghost{ background:var(--paper); border:1px solid var(--hf-line); color:#3c4536; }
-      .btn-danger{ background:#f2ddd4; color:#9c3a26; border:none; }
+      .btn-green:hover{ background:var(--gold); }
+      .btn-ghost{ background:#fff; border:1px solid var(--line); color:var(--ink); }
+      .btn-danger{ background:#fff; border:1px solid var(--danger); color:var(--danger); }
 
       .stepper{
         display:flex; align-items:center; justify-content:space-between;
-        border:1px solid var(--hf-line); border-radius:9px; padding:4px 8px; background:var(--paper);
+        border:1px solid var(--line); border-radius:2px; padding:5px 10px; background:#fff;
       }
       .stepper button{
-        width:24px; height:24px; border-radius:6px; border:none; background:#fff;
-        box-shadow:0 2px 4px rgba(0,0,0,.2), 0 1px 0 rgba(255,255,255,.6) inset; font-weight:700; cursor:pointer; color:var(--hf-forest-deep);
-        transition:transform .1s ease, box-shadow .1s ease;
+        width:24px; height:24px; border-radius:1px; border:1px solid var(--line); background:#fff;
+        font-weight:700; cursor:pointer; color:var(--ink);
+        transition:background .12s ease;
       }
-      .stepper button:active{ transform:translateY(1px); box-shadow:0 1px 2px rgba(0,0,0,.2); }
-      .stepper span{ font-weight:650; font-size:13px; }
+      .stepper button:hover{ background:var(--paper-deep); }
+      .stepper span{ font-weight:600; font-size:13px; }
 
-      .card{ border-radius:6px 6px 18px 18px; border:1px solid var(--hf-line); border-top:5px solid var(--plank); background:var(--paper); box-shadow:0 16px 30px -16px rgba(0,0,0,.5); }
-      .card.pad{ padding:20px; }
-      .sec-title{ font-family:'Fraunces',serif; font-weight:600; color:#2e2113; margin:0 0 14px; }
+      .card{
+        border-radius:2px; border:1px solid var(--line); background:#fff;
+        box-shadow:0 20px 40px -28px rgba(28,26,23,.25);
+      }
+      .card.pad{ padding:28px; }
+      .sec-title{ font-family:'Fraunces',serif; font-weight:600; color:var(--ink); margin:0 0 18px; font-size:19px; }
 
-      .fld{ display:block; margin-bottom:14px; }
-      .fld > span{ display:block; font-size:12.5px; font-weight:650; color:#6c5b3f; margin-bottom:6px; }
+      .fld{ display:block; margin-bottom:16px; }
+      .fld > span{ display:block; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; font-weight:600; color:var(--ink-soft); margin-bottom:8px; }
       .inp{
-        width:100%; border:1px solid var(--hf-line); border-radius:9px; padding:10px 12px;
-        font-size:14px; background:#fffaf0; transition:border-color .12s ease, box-shadow .12s ease;
+        width:100%; border:1px solid var(--line); border-radius:1px; padding:11px 13px;
+        font-size:14px; background:#fff; transition:border-color .12s ease;
       }
-      .inp:focus{ outline:none; border-color:var(--hf-forest); box-shadow:0 0 0 3px rgba(63,107,63,.15); }
+      .inp:focus{ outline:none; border-color:var(--gold); }
 
-      .pay{ display:flex; gap:14px; margin:8px 0 4px; font-size:13.5px; }
-      .summary .ln{ display:flex; justify-content:space-between; padding:5px 0; font-size:13.5px; color:#6c5b3f; }
-      .summary .ln.tot{ font-weight:700; font-size:15.5px; color:#2e2113; border-top:1px dashed var(--hf-line); margin-top:6px; padding-top:10px; }
+      .pay{ display:flex; gap:18px; margin:10px 0 6px; font-size:13.5px; }
+      .summary .ln{ display:flex; justify-content:space-between; padding:6px 0; font-size:13.5px; color:var(--ink-soft); }
+      .summary .ln.tot{ font-weight:700; font-size:16px; color:var(--ink); border-top:1px solid var(--line); margin-top:8px; padding-top:12px; }
 
       .listrow{
-        display:grid; grid-template-columns:40px 1fr auto; align-items:center; gap:14px;
-        padding:12px 0; border-bottom:1px dashed var(--hf-line);
+        display:grid; grid-template-columns:40px 1fr auto; align-items:center; gap:16px;
+        padding:14px 0; border-bottom:1px solid var(--line);
       }
       .listrow:last-child{ border-bottom:none; }
 
       .order{
-        border:1px solid var(--hf-line); border-top:5px solid var(--plank); border-radius:6px 6px 18px 18px;
-        padding:18px; margin-bottom:16px; background:var(--paper); box-shadow:0 16px 30px -16px rgba(0,0,0,.5);
+        border:1px solid var(--line); border-radius:2px;
+        padding:22px; margin-bottom:18px; background:#fff;
+        box-shadow:0 20px 40px -28px rgba(28,26,23,.22);
       }
       .order .top{ display:flex; justify-content:space-between; align-items:flex-start; }
-      .order .oid{ font-weight:700; color:#2e2113; font-family:'Fraunces',serif; }
-      .order .when{ font-size:12px; color:#9a8a64; margin-top:2px; }
-      .items-line{ font-size:13px; color:#6c5b3f; margin-top:10px; }
+      .order .oid{ font-weight:700; color:var(--ink); font-family:'Fraunces',serif; letter-spacing:.02em; }
+      .order .when{ font-size:11.5px; color:var(--ink-soft); margin-top:3px; }
+      .items-line{ font-size:13px; color:var(--ink-soft); margin-top:12px; }
 
-      .pill{ font-size:11px; font-weight:700; padding:4px 11px; border-radius:6px; border:1.5px dashed currentColor; text-transform:uppercase; letter-spacing:.04em; }
-      .p-rejected{ color:#9c3a26; }
+      .pill{ font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:5px 12px; border-radius:1px; border:1px solid currentColor; }
+      .p-rejected{ color:var(--danger); }
 
-      .track{ display:flex; justify-content:space-between; margin:18px 0 4px; position:relative; }
-      .track:before{
-        content:""; position:absolute; top:11px; left:5%; right:5%; height:2px; background:var(--hf-line); z-index:0;
-      }
-      .track .step{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; }
+      .track{ display:flex; justify-content:space-between; margin:22px 0 6px; position:relative; }
+      .track:before{ content:""; position:absolute; top:11px; left:5%; right:5%; height:1px; background:var(--line); z-index:0; }
+      .track .step{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; }
       .track .dot{
-        width:24px; height:24px; border-radius:50%; background:var(--paper); border:2px solid var(--hf-line);
-        display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#9a8a64;
+        width:23px; height:23px; border-radius:50%; background:#fff; border:1px solid var(--line);
+        display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; color:#a99c84;
       }
-      .track .step.done .dot{ background:var(--hf-forest); border-color:var(--hf-forest); color:#fff; }
-      .track .step.now .dot{ border-color:var(--hf-turmeric); color:var(--hf-turmeric); }
-      .track .lbl{ font-size:10.5px; color:#9a8a64; text-align:center; }
-      .track .step.now .lbl{ color:#2e2113; font-weight:650; }
+      .track .step.done .dot{ background:var(--ink); border-color:var(--ink); color:#fff; }
+      .track .step.now .dot{ border-color:var(--gold); color:var(--gold-deep); }
+      .track .lbl{ font-size:10px; letter-spacing:.03em; color:var(--ink-soft); text-align:center; }
+      .track .step.now .lbl{ color:var(--ink); font-weight:600; }
 
-      .subtabs{ display:flex; gap:6px; background:var(--plank); padding:5px; border-radius:11px; width:fit-content; box-shadow:inset 0 2px 6px rgba(0,0,0,.35); }
-      .subtabs button{ border:none; background:transparent; padding:8px 16px; border-radius:8px; font-weight:650; font-size:13.5px; color:#f3e6c8; cursor:pointer; }
-      .subtabs button.on{ background:var(--paper); color:var(--hf-forest-deep); box-shadow:0 2px 6px rgba(0,0,0,.25); }
+      .subtabs{ display:flex; gap:28px; border-bottom:1px solid var(--line); width:fit-content; }
+      .subtabs button{
+        border:none; background:transparent; padding:0 0 14px; font-weight:600; font-size:13px;
+        letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); cursor:pointer;
+        border-bottom:2px solid transparent; margin-bottom:-1px;
+      }
+      .subtabs button.on{ color:var(--ink); border-bottom-color:var(--gold); }
     `}</style>
   );
 }
@@ -399,8 +336,8 @@ export function CustomerAuth() {
   return (
     <>
       <HarithaStyles />
-      <div className="card pad" style={{ maxWidth: 380, margin: "30px auto" }}>
-        <div className="subtabs" style={{ marginBottom: 18 }}>
+      <div className="card pad" style={{ maxWidth: 400, margin: "40px auto" }}>
+        <div className="subtabs" style={{ marginBottom: 24 }}>
           <button className={mode === "login" ? "on" : ""} onClick={() => setCustAuthMode("login")}>Log in</button>
           <button className={mode === "signup" ? "on" : ""} onClick={() => setCustAuthMode("signup")}>Sign up</button>
         </div>
@@ -438,12 +375,12 @@ function HeroBanner() {
   return (
     <div className="hero">
       <div className="hero-text">
-        <span className="hero-eyebrow">🌾 Fresh from the Ranga Reddy farms</span>
-        <h2>Today's harvest,<br />at your door by evening.</h2>
+        <span className="hero-eyebrow">Sourced from the Ranga Reddy farms</span>
+        <h2>Today's harvest, at your door by evening.</h2>
         <div className="hero-chips">
-          <span className="hchip">🚚 Free above {inr(FREE_ABOVE)}</span>
-          <span className="hchip">⏱️ Same-day delivery</span>
-          <span className="hchip">🥕 {count} picked fresh today</span>
+          <span className="hchip">Free delivery above {inr(FREE_ABOVE)}</span>
+          <span className="hchip">Same-day delivery</span>
+          <span className="hchip">{count} items picked fresh today</span>
         </div>
       </div>
       <div className="hero-stack" aria-hidden="true">
@@ -473,7 +410,7 @@ function OffersRail() {
 
 export function CustShop() {
   const { catalog, cart, addToCart, cartInc, cartDec } = useApp();
-  const [query, setQuery] = useState(""); // local UI-only state — never touches the store
+  const [query, setQuery] = useState("");
   const avail = catalog.filter((v) => v.available);
   const q = query.trim().toLowerCase();
   const visible = q ? avail.filter((v) => v.name.toLowerCase().includes(q)) : avail;
@@ -492,7 +429,7 @@ export function CustShop() {
         ) : visible.map((v) => {
           const out = v.stock <= 0;
           const inCart = cart[v.id] || 0;
-          const { rating, count } = ratingFor(v.id != null ? v.id : v.name); // display-only, no logic impact
+          const { rating, count } = ratingFor(v.id != null ? v.id : v.name);
           const badge = out
             ? <span className="badge b-out">Out of stock</span>
             : v.stock <= 10
@@ -522,7 +459,7 @@ export function CustShop() {
                 <span className="rating-count">({count})</span>
               </div>
               <div className="pr">{inr(v.price)} <span className="unit">/ {v.unit}</span></div>
-              <div style={{ marginTop: 7 }}>{badge}</div>
+              <div style={{ marginTop: 9 }}>{badge}</div>
               <div className="foot">{foot}</div>
             </TiltCard>
           );
@@ -589,7 +526,7 @@ export function CustCart() {
   return (
     <>
       <HarithaStyles />
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 18 }} className="cartwrap">
+      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 22 }} className="cartwrap">
         <div className="card pad">
           <h2 className="sec-title">Your cart ({items.length} item{items.length > 1 ? "s" : ""})</h2>
           {items.map((i) => (
@@ -625,7 +562,7 @@ export function CustCart() {
             <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               Delivery address
               <button type="button" className="btn btn-ghost btn-sm" style={{ fontWeight: 600 }} disabled={locating} onClick={useCurrentLocation}>
-                {locating ? "📍 Locating…" : "📍 Use current location"}
+                {locating ? "Locating…" : "Use current location"}
               </button>
             </span>
             <textarea
@@ -634,8 +571,8 @@ export function CustCart() {
               placeholder="Flat / house, street, area, landmark, pincode"
             />
             {coords ? (
-              <div className="muted" style={{ fontSize: 12, marginTop: 5 }}>
-                📌 Exact location attached — the store and rider will see your pinned spot on a map.
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                Exact location attached — the store and rider will see your pinned spot on a map.
               </div>
             ) : null}
           </label>
@@ -644,12 +581,12 @@ export function CustCart() {
             <label><input type="radio" name="pay" value="UPI" checked={pay === "UPI"} onChange={() => setPay("UPI")} /> UPI / Online</label>
             <label><input type="radio" name="pay" value="COD" checked={pay === "COD"} onChange={() => setPay("COD")} /> Cash on delivery</label>
           </div>
-          <div className="summary" style={{ marginTop: 16 }}>
+          <div className="summary" style={{ marginTop: 18 }}>
             <div className="ln"><span>Subtotal</span><span>{inr(sub)}</span></div>
-            <div className="ln"><span>Delivery fee</span><span>{fee === 0 ? <b style={{ color: "var(--green)" }}>FREE</b> : inr(fee)}</span></div>
+            <div className="ln"><span>Delivery fee</span><span>{fee === 0 ? <b style={{ color: "var(--success)" }}>FREE</b> : inr(fee)}</span></div>
             <div className="ln tot"><span>Total</span><span>{inr(tot)}</span></div>
           </div>
-          <button className="btn btn-green btn-block" style={{ marginTop: 14 }} onClick={handlePlaceOrder}>
+          <button className="btn btn-green btn-block" style={{ marginTop: 16 }} onClick={handlePlaceOrder}>
             Place order · {inr(tot)}
           </button>
         </div>
@@ -661,7 +598,7 @@ export function CustCart() {
 
 function Tracker({ o }) {
   if (o.status === "REJECTED") {
-    return <div className="pill p-rejected" style={{ margin: "10px 0" }}>✕ Order rejected by store</div>;
+    return <div className="pill p-rejected" style={{ margin: "10px 0" }}>Order rejected by store</div>;
   }
   const cur = STEP_ORDER[o.status];
   return (
@@ -695,18 +632,18 @@ function OrderCardCustomer({ o }) {
       <div className="items-line">{o.items.map((i) => `${i.emoji} ${i.name} ×${i.qty}`).join("  ·  ")}</div>
       <Tracker o={o} />
       {partner && (o.status === "ASSIGNED" || o.status === "PICKED_UP") ? (
-        <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>🛵 {partner.name} is handling your delivery · {partner.phone}</div>
+        <div className="muted" style={{ fontSize: 13, marginTop: 10 }}>{partner.name} is handling your delivery · {partner.phone}</div>
       ) : null}
       {["ASSIGNED", "PICKED_UP"].includes(o.status) ? <LiveMap orderId={o.id} customer={o.customer} /> : null}
-      <div className="meta" style={{ marginTop: 12 }}>
-        <span>💳 <b>{o.paymentMethod}</b> {o.paymentStatus === "Paid" ? "· Paid" : "· " + o.paymentStatus}</span>
+      <div className="meta" style={{ marginTop: 14 }}>
+        <span><b>{o.paymentMethod}</b> {o.paymentStatus === "Paid" ? "· Paid" : "· " + o.paymentStatus}</span>
         <span className="right" style={{ fontWeight: 700, fontFamily: "'Fraunces',serif", fontSize: 15 }}>{inr(o.total)}</span>
       </div>
       {o.paymentMethod === "UPI" && o.paymentStatus === "Pending" && o.status !== "REJECTED" ? (
         <PayUpiButton o={o} />
       ) : null}
       {o.status === "DELIVERED" ? (
-        <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={() => reorder(o.id)}>↻ Reorder</button>
+        <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => reorder(o.id)}>Reorder</button>
       ) : null}
     </div>
   );
@@ -716,10 +653,10 @@ function PayUpiButton({ o }) {
   const { refreshSettings, setModal, closeModal } = useApp();
   return (
     <button
-      className="btn btn-carrot btn-sm" style={{ marginTop: 8 }}
+      className="btn btn-carrot btn-sm" style={{ marginTop: 10 }}
       onClick={async () => { const s = await refreshSettings(); showUpiPayModal(o, s, setModal, closeModal); }}
     >
-      📲 Pay via UPI
+      Pay via UPI
     </button>
   );
 }
@@ -744,7 +681,7 @@ export function showUpiPayModal(order, settings, setModal, closeModal) {
     <>
       <h3>Complete your payment</h3>
       <p className="muted" style={{ marginBottom: 14 }}>Pay <b>{inr(order.total)}</b> via UPI to complete order <b>{order.id}</b>.</p>
-      <a className="btn btn-green btn-block" href={upiLink} style={{ marginBottom: 10 }}>📲 Pay {inr(order.total)} via UPI app</a>
+      <a className="btn btn-green btn-block" href={upiLink} style={{ marginBottom: 10 }}>Pay {inr(order.total)} via UPI app</a>
       <p className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>On a computer? Open any UPI app on your phone and pay <b>{upiId}</b> the amount <b>{inr(order.total)}</b>, mentioning <b>{order.id}</b> in the note.</p>
       <p className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>The store will confirm your payment shortly — you can check its status under "My orders".</p>
       <div className="actions" style={{ marginTop: 14 }}>
@@ -787,7 +724,7 @@ export function Customer() {
   return (
     <>
       <HarithaStyles />
-      <WhoBar label={`👤 ${auth.name || ""} · ${auth.phone || ""}`} />
+      <WhoBar label={`${auth.name || ""} · ${auth.phone || ""}`} />
       <div className="subtabs">
         {tabs.map(([id, label]) => (
           <button key={id} className={custTab === id ? "on" : ""} onClick={() => setCustTab(id)}>{label}</button>
