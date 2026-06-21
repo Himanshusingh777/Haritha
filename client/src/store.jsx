@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { fetchState, pushState, postLocation, fetchMe, fetchSettings, apiRequest } from "./api.js";
 import { cartItems, cartSubtotal, feeFor } from "./helpers.js";
 
-const POLL_MS = 4000;
+const POLL_MS = 4000; // how often we refetch shared state — the "real-time" part on serverless
 
 const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
@@ -28,7 +28,7 @@ export function AppProvider({ children }) {
   const dbRef = useRef({ catalog: [], orders: [], partners: [] });
   dbRef.current = { catalog, orders, partners };
 
-  const [role, setRole] = useState("customer");
+  const [role, setRole] = useState("customer"); // 'customer' | 'admin' | 'delivery'
   const [custTab, setCustTab] = useState("shop");
   const [adminTab, setAdminTab] = useState("orders");
   const [custAuthMode, setCustAuthMode] = useState("login");
@@ -38,10 +38,10 @@ export function AppProvider({ children }) {
   const [settings, setSettings] = useState({ upiId: "" });
   const [offers, setOffers] = useState([]);
 
-  const [liveLocations, setLiveLocations] = useState({});
+  const [liveLocations, setLiveLocations] = useState({}); // orderId -> {lat,lng}, never persisted
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null);
-  const [toastMsg, setToastMsg] = useState(null);
+  const [modal, setModal] = useState(null); // JSX content or null
+  const [toastMsg, setToastMsg] = useState(null); // {msg, emoji, key}
 
   const applyingRemote = useRef(false);
 
@@ -51,6 +51,7 @@ export function AppProvider({ children }) {
 
   const closeModal = useCallback(() => setModal(null), []);
 
+  // ---------- initial load ----------
   useEffect(() => {
     (async () => {
       try {
@@ -82,6 +83,7 @@ export function AppProvider({ children }) {
     })();
   }, []);
 
+  // ---------- live sync via polling (no persistent socket on serverless) ----------
   useEffect(() => {
     if (loading) return;
     const id = setInterval(async () => {
@@ -94,13 +96,15 @@ export function AppProvider({ children }) {
         setLiveLocations(data.liveLocations || {});
         applyingRemote.current = false;
       } catch {
+        // a missed poll isn't worth surfacing — it'll just retry next tick
       }
     }, POLL_MS);
     return () => clearInterval(id);
   }, [loading]);
 
+  // Push the whole shared state to the server (saves to Postgres + broadcasts)
   const save = useCallback(async (overrides = {}) => {
-    if (applyingRemote.current) return;
+    if (applyingRemote.current) return; // don't echo back a change we just received
     const state = { ...dbRef.current, ...overrides };
     if (overrides.catalog) state.catalog = overrides.catalog;
     if (overrides.orders) state.orders = overrides.orders;
@@ -108,6 +112,7 @@ export function AppProvider({ children }) {
     await pushState(state);
   }, []);
 
+  // ---------- customer: share my live location while a rider is en route ----------
   const watchId = useRef(null);
   const watchingOrderId = useRef(null);
 
@@ -148,6 +153,7 @@ export function AppProvider({ children }) {
     startLocationSharing(active.id);
   }, [auth, orders, startLocationSharing, stopLocationSharing]);
 
+  // ---------- cart actions ----------
   const addToCart = useCallback((id) => {
     const v = dbRef.current.catalog.find((c) => c.id === id);
     if (v && v.stock > 0) {
@@ -184,6 +190,7 @@ export function AppProvider({ children }) {
     });
   }, []);
 
+  // ---------- auth actions ----------
   const logout = useCallback(async () => {
     await apiRequest("/api/auth/logout", "POST");
     setAuth({ role: null });
@@ -240,6 +247,7 @@ export function AppProvider({ children }) {
     }
   }, [toast]);
 
+  // ---------- order actions ----------
   const advance = useCallback(async (id, status, msg) => {
     const next = dbRef.current.orders.map((o) =>
       o.id === id ? { ...o, status, history: [...o.history, { s: status, at: Date.now() }] } : o
@@ -350,6 +358,7 @@ export function AppProvider({ children }) {
     toast("Payment marked as received", "💰");
   }, [save, toast]);
 
+  // ---------- catalog actions ----------
   const saveVeg = useCallback(async (editingId, fields) => {
     let next;
     if (editingId) {
@@ -376,6 +385,7 @@ export function AppProvider({ children }) {
     await save({ catalog: next });
   }, [save]);
 
+  // ---------- partner actions ----------
   const addPartner = useCallback(async ({ name, phone, password }) => {
     const partner = { id: "p" + Date.now().toString(36), name, phone, online: false };
     const next = [...dbRef.current.partners, partner];
@@ -415,6 +425,7 @@ export function AppProvider({ children }) {
     toast(me?.online ? "You are online" : "You are offline", me?.online ? "🟢" : "⚪");
   }, [auth, save, toast]);
 
+  // ---------- offers actions ----------
   const saveOffer = useCallback(async (idx, offer) => {
     let next;
     if (idx !== null && idx !== undefined) {
